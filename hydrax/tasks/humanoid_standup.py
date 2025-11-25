@@ -5,16 +5,13 @@ import jax.numpy as jnp
 import mujoco
 from mujoco import mjx
 
-from hydrax import ROOT
 from hydrax.task_base import Task
-
 
 class HumanoidStandup(Task):
     """Standup task for the Unitree G1 humanoid."""
 
-    def __init__(self) -> None:
+    def __init__(self, mj_model: mujoco.MjModel) -> None:
         """Load the MuJoCo model and set task parameters."""
-        mj_model = mujoco.MjModel.from_xml_path(ROOT + "/models/g1/scene.xml")
         super().__init__(
             mj_model,
             trace_sites=["imu_in_torso", "left_foot", "right_foot"],

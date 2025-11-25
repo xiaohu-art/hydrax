@@ -2,6 +2,7 @@ import argparse
 
 import mujoco
 
+from hydrax import ROOT
 from hydrax.algs import CEM
 from hydrax.simulation.deterministic import run_interactive
 from hydrax.tasks.humanoid_mocap import HumanoidMocap
@@ -34,8 +35,19 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+# Define the model used for simulation
+mj_model = mujoco.MjModel.from_xml_path(ROOT + "/models/g1/scene_23dof.xml")
+mj_model.opt.timestep = 0.02
+mj_model.opt.iterations = 10
+mj_model.opt.ls_iterations = 50
+mj_model.opt.o_solimp = [0.9, 0.95, 0.001, 0.5, 2]
+# mj_model.opt.enableflags = mujoco.mjtEnableBit.mjENBL_OVERRIDE
+
 # Define the task (cost and dynamics)
-task = HumanoidMocap(reference_filename=args.reference_filename)
+task = HumanoidMocap(
+    mj_model,
+    reference_filename=args.reference_filename
+)
 
 # Set up the controller
 ctrl = CEM(
@@ -50,14 +62,6 @@ ctrl = CEM(
     num_knots=4,
     iterations=args.iterations,
 )
-
-# Define the model used for simulation
-mj_model = task.mj_model
-mj_model.opt.timestep = 0.01
-mj_model.opt.iterations = 10
-mj_model.opt.ls_iterations = 50
-mj_model.opt.o_solimp = [0.9, 0.95, 0.001, 0.5, 2]
-mj_model.opt.enableflags = mujoco.mjtEnableBit.mjENBL_OVERRIDE
 
 # Set the initial state
 mj_data = mujoco.MjData(mj_model)

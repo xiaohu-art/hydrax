@@ -8,7 +8,6 @@ from huggingface_hub import hf_hub_download
 from mujoco import mjx
 from mujoco.mjx._src.math import quat_sub
 
-from hydrax import ROOT
 from hydrax.task_base import Task
 
 
@@ -21,6 +20,7 @@ class HumanoidMocap(Task):
 
     def __init__(
         self,
+        mj_model: mujoco.MjModel,
         reference_filename: str = "Lafan1/mocap/UnitreeG1/walk1_subject1.npz",
     ) -> None:
         """Load the MuJoCo model and set task parameters.
@@ -28,9 +28,6 @@ class HumanoidMocap(Task):
         The list of available reference files can be found at
         https://huggingface.co/datasets/robfiras/loco-mujoco-datasets/tree/main.
         """
-        mj_model = mujoco.MjModel.from_xml_path(
-            ROOT + "/models/g1/scene_23dof.xml"
-        )
         super().__init__(
             mj_model,
             trace_sites=["imu_in_torso", "left_foot", "right_foot"],

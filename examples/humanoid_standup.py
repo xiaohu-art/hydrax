@@ -2,6 +2,7 @@ import argparse
 
 import mujoco
 
+from hydrax import ROOT
 from hydrax.algs import MPPI
 from hydrax.simulation.asynchronous import run_interactive as run_async
 from hydrax.simulation.deterministic import run_interactive
@@ -26,8 +27,18 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    mj_model = mujoco.MjModel.from_xml_path(ROOT + "/models/g1/scene.xml")
+    mj_model.opt.timestep = 0.02
+    mj_model.opt.o_solimp = [0.9, 0.95, 0.001, 0.5, 2]
+    # mj_model.opt.enableflags = mujoco.mjtEnableBit.mjENBL_OVERRIDE
+
     # Define the task (cost and dynamics)
-    task = HumanoidStandup()
+    task = HumanoidStandup(mj_model)
+
+    # Set the initial state so the robot falls and needs to stand back up
+    mj_data = mujoco.MjData(mj_model)
+    mj_data.qpos[:] = mj_model.keyframe("stand").qpos
+    mj_data.qpos[3:7] = [0.7, 0.0, -0.7, 0.0]
 
     # Set up the controller
     ctrl = MPPI(
@@ -41,16 +52,7 @@ if __name__ == "__main__":
         num_knots=4,
     )
 
-    # Define the model used for simulation (stiffer contact parameters)
-    mj_model = task.mj_model
-    mj_model.opt.timestep = 0.01
-    mj_model.opt.o_solimp = [0.9, 0.95, 0.001, 0.5, 2]
-    mj_model.opt.enableflags = mujoco.mjtEnableBit.mjENBL_OVERRIDE
-
-    # Set the initial state so the robot falls and needs to stand back up
-    mj_data = mujoco.MjData(mj_model)
-    mj_data.qpos[:] = mj_model.keyframe("stand").qpos
-    mj_data.qpos[3:7] = [0.7, 0.0, -0.7, 0.0]
+    assert ctrl.dt == task.dt, "Controller timestep does not match task timestep"
 
     # Run the interactive simulation
     if args.asynchronous:
